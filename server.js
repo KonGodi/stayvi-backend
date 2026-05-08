@@ -3,9 +3,16 @@ const express = require('express');
 const cors = require('cors');
 const Anthropic = require('@anthropic-ai/sdk');
 
+const path = require('path');
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Serve widget.js as a public static file
+app.get('/widget.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.sendFile(path.join(__dirname, 'widget.js'));
+});
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
