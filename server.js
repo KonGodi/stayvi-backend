@@ -2,11 +2,30 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const Anthropic = require('@anthropic-ai/sdk');
+const { createClient } = require('@supabase/supabase-js');
 
 const path = require('path');
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// ─── Supabase client ────────────────────────────────────────────────────────
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
+
+async function saveMessage(hotelId, hotelName, sessionId, role, message) {
+  const { error } = await supabase.from('conversations').insert({
+    hotel_id: hotelId,
+    hotel_name: hotelName,
+    session_id: sessionId,
+    role,
+    message,
+    created_at: new Date().toISOString()
+  });
+  if (error) console.error('Supabase save error:', error.message);
+}
 
 // Serve widget.js as a public static file
 app.get('/widget.js', (req, res) => {
@@ -90,7 +109,7 @@ YOUR ROLE:
 
 // ─── Chat endpoint ──────────────────────────────────────────────────────────
 app.post('/chat', async (req, res) => {
-  const { message, hotelId, history = [] } = req.body;
+  const { message, hotelId, history = [], sessionId } = req.body;
 
   if (!message || !hotelId) {
     return res.status(400).json({ error: 'message and hotelId are required' });
@@ -100,6 +119,12 @@ app.post('/chat', async (req, res) => {
   if (!hotel) {
     return res.status(404).json({ error: `Hotel "${hotelId}" not found` });
   }
+
+  // Use provided sessionId or generate a new one
+  const session = sessionId || `session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+  // Save user message to Supabase
+  await saveMessage(hotelId, hotel.name, session, 'user', message);
 
   // Build message history for Claude
   const messages = [
@@ -116,7 +141,11 @@ app.post('/chat', async (req, res) => {
     });
 
     const reply = response.content[0].text;
-    res.json({ reply, hotelName: hotel.name });
+
+    // Save AI reply to Supabase
+    await saveMessage(hotelId, hotel.name, session, 'assistant', reply);
+
+    res.json({ reply, hotelName: hotel.name, sessionId: session });
   } catch (err) {
     console.error('Claude API error:', err);
     res.status(500).json({ error: 'Failed to get response from AI' });

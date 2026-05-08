@@ -9,6 +9,7 @@
   // ─── State ─────────────────────────────────────────────────────────────────
   var history = [];
   var open = false;
+  var sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
 
   // ─── Styles ────────────────────────────────────────────────────────────────
   var style = document.createElement('style');
@@ -234,7 +235,7 @@
       var res = await fetch(`${BACKEND_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, hotelId: HOTEL_ID, history })
+        body: JSON.stringify({ message: text, hotelId: HOTEL_ID, history, sessionId })
       });
       var data = await res.json();
       hideTyping();
