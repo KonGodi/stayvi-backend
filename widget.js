@@ -1,6 +1,6 @@
 (function () {
   // ─── Config (injected per hotel) ───────────────────────────────────────────
-  var BACKEND_URL = window.StayViConfig?.backendUrl || 'http://localhost:3000';
+  var BACKEND_URL = window.StayViConfig?.backendUrl || 'https://stayvi-backend.onrender.com';
   var HOTEL_ID = window.StayViConfig?.hotelId || 'silk-house-hanoi';
   var HOTEL_NAME = window.StayViConfig?.hotelName || 'StayVi Concierge';
   var ACCENT = window.StayViConfig?.accent || '#1E4D3A';
